@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.BlockMiner;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -31,14 +32,16 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
   private final Address localAddress;
 
   public CliqueBlockMiner(
-      final Function<BlockHeader, CliqueBlockCreator> blockCreator,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
-      final BlockHeader parentHeader,
-      final Address localAddress) {
-    super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
+          final Function<BlockHeader, CliqueBlockCreator> blockCreator,
+          final ProtocolSchedule protocolSchedule,
+          final ProtocolContext protocolContext,
+          final Subscribers<MinedBlockObserver> observers,
+          final AbstractBlockScheduler scheduler,
+          final BlockHeader parentHeader,
+          final Address localAddress,
+          final AbstractPendingTransactionsSorter pendingTransactions
+          ) {
+    super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader,pendingTransactions);
     this.localAddress = localAddress;
   }
 

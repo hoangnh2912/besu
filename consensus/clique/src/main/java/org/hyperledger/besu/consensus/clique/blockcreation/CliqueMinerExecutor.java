@@ -89,7 +89,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         observers,
         blockScheduler,
         parentHeader,
-        localAddress);
+        localAddress,pendingTransactions);
   }
 
   @Override

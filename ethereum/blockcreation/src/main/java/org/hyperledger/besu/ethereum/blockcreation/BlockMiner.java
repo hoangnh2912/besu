@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -57,14 +58,18 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
   private final AbstractBlockScheduler scheduler;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
 
   public BlockMiner(
-      final Function<BlockHeader, M> blockCreatorFactory,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
-      final BlockHeader parentHeader) {
+          final Function<BlockHeader, M> blockCreatorFactory,
+          final ProtocolSchedule protocolSchedule,
+          final ProtocolContext protocolContext,
+          final Subscribers<MinedBlockObserver> observers,
+          final AbstractBlockScheduler scheduler,
+          final BlockHeader parentHeader,
+          final AbstractPendingTransactionsSorter pendingTransactions
+
+          ) {
     this.blockCreatorFactory = blockCreatorFactory;
     this.minerBlockCreator = blockCreatorFactory.apply(parentHeader);
     this.protocolContext = protocolContext;
@@ -72,7 +77,28 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     this.observers = observers;
     this.scheduler = scheduler;
     this.parentHeader = parentHeader;
+    this.pendingTransactions=pendingTransactions;
   }
+
+  public BlockMiner(
+          final Function<BlockHeader, M> blockCreatorFactory,
+          final ProtocolSchedule protocolSchedule,
+          final ProtocolContext protocolContext,
+          final Subscribers<MinedBlockObserver> observers,
+          final AbstractBlockScheduler scheduler,
+          final BlockHeader parentHeader
+
+  ) {
+    this.blockCreatorFactory = blockCreatorFactory;
+    this.minerBlockCreator = blockCreatorFactory.apply(parentHeader);
+    this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
+    this.observers = observers;
+    this.scheduler = scheduler;
+    this.parentHeader = parentHeader;
+    this.pendingTransactions = null;
+  }
+
 
   @Override
   public void run() {
@@ -130,6 +156,16 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     LOG.trace("Started a mining operation.");
 
     final long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
+
+    if (pendingTransactions.size() == 0) {
+      return false;
+    }
+    LOG.info("Current Pending Transactions count {}",pendingTransactions.size());
+    for (Transaction transaction :pendingTransactions.getLocalTransactions()
+         ) {
+      LOG.info("From {} to {} value {} , nonce {}",transaction.getSender(),transaction.getTo(),transaction.getValue(),transaction.getNonce());
+    }
+
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
