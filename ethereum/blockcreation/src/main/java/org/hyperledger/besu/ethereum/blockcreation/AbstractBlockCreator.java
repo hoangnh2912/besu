@@ -147,7 +147,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
+    LOG.info("createBlock 4 {}",pendingTransactions.size());
+
     try {
+      if (pendingTransactions.size() == 0) {
+        throw new RuntimeException("Empty pending transactions");
+      }
+
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao);
       final Address miningBeneficiary =
